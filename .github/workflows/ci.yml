@@ -34,11 +34,11 @@ jobs:
     
     - name: Run linter
       working-directory: ./app
-      run: yarn lint || echo "No lint script found"
+      run: yarn lint --if-present
     
     - name: Run tests
       working-directory: ./app
-      run: yarn test || echo "No test script found"
+      run: yarn test --if-present
 
   build-and-push:
     name: Build and Push to ECR
