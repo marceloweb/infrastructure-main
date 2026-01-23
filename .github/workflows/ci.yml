@@ -41,7 +41,7 @@ jobs:
           fi
 
       - name: Build Docker image
-        run: docker build -t ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ./example-app
+        run: docker build -t ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ./app
 
       - name: Push image to ECR
         if: steps.check-ecr.outputs.repo-found == 'true'
