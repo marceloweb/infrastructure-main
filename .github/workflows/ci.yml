@@ -9,7 +9,7 @@ on:
 
 env:
   AWS_DEFAULT_REGION: us-east-1
-  ECR_REPOSITORY: example-app
+  ECR_REPOSITORY: example-app-dev
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
