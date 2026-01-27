@@ -1,14 +1,14 @@
-variable cluster_name {
+variable "cluster_name" {
   type        = string
   description = "description"
 }
 
-variable cluster_role_arn {
+variable "cluster_role_arn" {
   type        = string
   description = "description"
 }
 
-variable subnet_ids {
+variable "subnet_ids" {
   type        = list(string)
   description = "description"
 }
@@ -36,3 +36,7 @@ variable "desired_size" {
   default     = 2
 }
 
+variable "tags" {
+  description = "Default tags"
+  type        = map(string)
+}

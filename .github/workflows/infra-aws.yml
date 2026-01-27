@@ -51,20 +51,20 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
-        working-directory: terraform/${{ github.event.inputs.environment }}
+        working-directory: terraform
 
       - name: Terraform Plan
         id: plan
         if: github.event.inputs.action == 'plan'
-        run: terraform plan -var-file=${{ github.event.inputs.environment }}.tfvars
-        working-directory: terraform/${{ github.event.inputs.environment }}
+        run: terraform plan -var-file=envs/${{ github.event.inputs.environment }}/${{ github.event.inputs.environment }}.tfvars
+        working-directory: terraform
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        run: terraform apply -auto-approve -var-file=${{ github.event.inputs.environment }}.tfvars
-        working-directory: terraform/${{ github.event.inputs.environment }}
+        run: terraform apply -auto-approve -var-file=envs/${{ github.event.inputs.environment }}/${{ github.event.inputs.environment }}.tfvars
+        working-directory: terraform
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        run: terraform destroy -auto-approve -var-file=${{ github.event.inputs.environment }}.tfvars
-        working-directory: terraform/${{ github.event.inputs.environment }}
+        run: terraform destroy -auto-approve -var-file=envs/${{ github.event.inputs.environment }}/${{ github.event.inputs.environment }}.tfvars
+        working-directory: terraform
