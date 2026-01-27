@@ -50,7 +50,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend-config=envs/${{ github.event.inputs.environment }}/backend.tfvars
+        run: terraform init -backend-config=envs/${{ github.event.inputs.environment }}/backend.tf
         working-directory: terraform
 
       - name: Terraform Plan
