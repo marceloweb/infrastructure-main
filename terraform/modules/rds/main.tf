@@ -45,3 +45,32 @@ resource "aws_db_instance" "mariadb" {
   publicly_accessible    = false
   tags                   = var.tags
 }
+
+resource "time_sleep" "wait_for_db" {
+  depends_on = [aws_db_instance.mariadb]
+
+  create_duration = "120s"
+}
+
+resource "null_resource" "db_setup" {
+  depends_on = [time_sleep.wait_for_db]
+
+  triggers = {
+    db_instance_id = aws_db_instance.mariadb.id
+    sql_file_hash  = filemd5("${path.module}/init.sql")
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      mysql -h ${aws_db_instance.mariadb.address} \
+            -P ${aws_db_instance.mariadb.port} \
+            -u ${var.db_username} \
+            -p${var.db_password} \
+            ${var.db_name} < ${path.module}/init.sql
+    EOT
+
+    environment = {
+      MYSQL_PWD = var.db_password
+    }
+  }
+}
