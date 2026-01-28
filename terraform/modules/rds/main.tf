@@ -34,4 +34,4 @@ resource "aws_db_instance" "mariadb" {
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   publicly_accessible    = false
   tags                   = var.tags
-}}
+}
