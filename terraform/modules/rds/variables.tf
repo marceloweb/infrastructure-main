@@ -32,13 +32,31 @@ variable "db_name" {
   default     = "example-app_db"
 }
 
+variable "db_engine" {
+  description = "The database engine"
+  type        = string
+  default     = "mariadb"
+}
+
 variable "db_engine_version" {
   description = "The engine version of the database."
   type        = string
   default     = "11.4.8"
 }
 
+variable "db_instance_class" {
+  description = "The instance class."
+  type        = string
+  default     = "db.t3.micro"
+}
+
 variable "eks_cluster_security_group_id" {
   description = "The ID of the security group for the EKS cluster to allow ingress."
   type        = string
 }
+
+variable "tags" {
+  description = "Default tags"
+  type        = map(string)
+}
+

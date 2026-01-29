@@ -4,6 +4,7 @@ resource "aws_eks_cluster" "eks" {
   vpc_config {
     subnet_ids = var.subnet_ids
   }
+  tags = var.tags
 }
 
 resource "aws_eks_node_group" "nodes" {
@@ -18,4 +19,6 @@ resource "aws_eks_node_group" "nodes" {
     min_size     = var.min_size
     max_size     = var.max_size
   }
+
+  tags = var.tags
 }

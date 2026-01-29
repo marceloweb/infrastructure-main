@@ -1,4 +1,9 @@
 variable "role_name" {
-  description = "The name of the IAM role"
+  description = "IAM role"
   type        = string
+}
+
+variable "tags" {
+  description = "Default tags"
+  type        = map(string)
 }

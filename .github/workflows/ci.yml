@@ -6,16 +6,20 @@ on:
       - main
       - develop
       - 'feature/**'
+      - 'release/**'
 
 env:
   AWS_DEFAULT_REGION: us-east-1
-  ECR_REPOSITORY: example-app-dev
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build_and_test:
+    name: "CI/CD ${{ github.event.inputs.action }}"
     runs-on: ubuntu-latest
-    environment: dev    
+    environment: ${{ github.ref == 'refs/heads/main' && 'hml' || (startsWith(github.ref, 'refs/heads/release/') && 'prd' || 'dev') }}  
+
+    env: 
+      ECR_REPOSITORY: example-app-${{ github.ref == 'refs/heads/main' && 'hml' || (startsWith(github.ref, 'refs/heads/release/') && 'prd' || 'dev') }}  
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,15 +34,40 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+        continue-on-error: true
+
+      - name: Validate ECR login
+        if: steps.login-ecr.outcome == 'failure'
+        run: |
+          echo "Falha ao autenticar no Amazon ECR"
+          echo "Verifique as credenciais AWS e permissões IAM"
+          exit 1  
 
       - name: Check for ECR repository existence
         id: check-ecr
         run: |
-          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > /dev/null 2>&1; then
-            echo "repo-found=true" >> $GITHUB_OUTPUT
+          if aws ecr describe-repositories \
+            --repository-names "${{ env.ECR_REPOSITORY }}" \
+            --region "${{ env.AWS_DEFAULT_REGION }}" \
+            > /dev/null 2>&1; then
+            echo "repo-found=true" >> "$GITHUB_OUTPUT"
           else
-            echo "repo-found=false" >> $GITHUB_OUTPUT
+            echo "repo-found=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Abort if ECR repository not found
+        if: steps.check-ecr.outputs.repo-found != 'true'
+        run: |
+          echo "::error:: PIPELINE ABORTADA: Repositório ECR '${{ env.ECR_REPOSITORY }}' não existe"
+          echo ""
+          echo "Ações necessárias:"
+          echo "1. Verifique se o repositório existe no ECR"
+          echo "2. Verifique as permissões IAM (ecr:DescribeRepositories)"
+          echo "3. Crie o repositório com: aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }}"
+          echo ""
+          echo "Região: ${{ env.AWS_DEFAULT_REGION }}"
+          echo "Repositório esperado: ${{ env.ECR_REPOSITORY }}"
+          exit 1    
 
       - name: Build Docker image
         run: docker build -t ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ./app
@@ -47,17 +76,38 @@ jobs:
         if: steps.check-ecr.outputs.repo-found == 'true'
         run: |
           docker tag ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          docker tag ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
 
   deploy:
+    name: "Deploy to EKS"
     runs-on: ubuntu-latest
-    environment: dev
     needs: build_and_test
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    environment: ${{ github.ref == 'refs/heads/main' && 'hml' || (startsWith(github.ref, 'refs/heads/release/') && 'prd' || 'dev') }}
+
+    env:
+      ECR_REPOSITORY: example-app-${{ github.ref == 'refs/heads/main' && 'hml' || (startsWith(github.ref, 'refs/heads/release/') && 'prd' || 'dev') }}
+      CLUSTER_NAME: example-app-${{ github.ref == 'refs/heads/main' && 'hml' || (startsWith(github.ref, 'refs/heads/release/') && 'prd' || 'dev') }}-cluster
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Determine Environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=hml" >> $GITHUB_OUTPUT
+            echo "node_env=staging" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
+            echo "environment=prd" >> $GITHUB_OUTPUT
+            echo "node_env=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "node_env=development" >> $GITHUB_OUTPUT
+          fi  
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -67,4 +117,65 @@ jobs:
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name example-app-dev --region ${{ env.AWS_DEFAULT_REGION }}
+        run: aws eks update-kubeconfig --name ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Verify cluster connection
+        env:
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_PORT: ${{ vars.DB_PORT }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ECR_REGISTRY: ${{ steps.get-registry.outputs.registry }}
+        run: |
+          echo "Replacing placeholders..."
+
+          sed -i "s|<DB_HOST>|${DB_HOST}|g" k8s/configmap.yml
+          sed -i "s|<DB_PORT>|${DB_PORT}|g" k8s/configmap.yml
+          sed -i "s|<DB_NAME>|${DB_NAME}|g" k8s/configmap.yml
+          sed -i "s|<DB_USERNAME>|${DB_USERNAME}|g" k8s/secret.yml
+          sed -i "s|<DB_PASSWORD>|${DB_PASSWORD}|g" k8s/secret.yml
+
+      - name: Apply Kubernetes manifests
+        run: |
+          echo "Aplicando manifestos no cluster..."
+          
+          kubectl apply -f k8s/namespace.yml
+          kubectl apply -f k8s/configmap.yml
+          kubectl apply -f k8s/secret.yml
+          kubectl apply -f k8s/deployment.yml
+          kubectl apply -f k8s/service.yml
+          kubectl apply -f k8s/ingress.yml
+          kubectl apply -f k8s/hpa.yml
+          
+          echo "✅ Manifestos aplicados com sucesso!"
+
+      - name: Wait for deployment rollout
+        run: |
+          echo "⏳ Aguardando rollout do deployment..."
+          kubectl rollout status deployment/app -n example-app --timeout=5m
+          echo "✅ Deployment finalizado!"
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verificando deployment..."
+          echo ""
+          echo "Pods:"
+          kubectl get pods -n example-app
+          echo ""
+          echo "Services:"
+          kubectl get svc -n example-app
+          echo ""
+          echo "Ingress:"
+          kubectl get ingress -n example-app
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "::error:: Deployment falhou!"
+          echo ""
+          echo "Logs dos pods:"
+          kubectl logs -l app=example-app -n example-app --tail=50 || true
+          echo ""
+          echo "Eventos:"
+          kubectl get events -n example-app --sort-by='.lastTimestamp' | tail -20 || true    

@@ -51,6 +51,7 @@ k8s/**/secret-*.yaml
 # Terraform
 *.tfstate
 *.tfstate.*
+.terraform.lock.hcl
 .terraform/
 
 # Misc

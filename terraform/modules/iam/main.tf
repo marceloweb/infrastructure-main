@@ -19,6 +19,8 @@ resource "aws_iam_role" "eks_node_role" {
       }
     ]
   })
+
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
