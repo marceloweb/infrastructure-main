@@ -46,14 +46,17 @@ jobs:
       - name: Check for ECR repository existence
         id: check-ecr
         run: |
-          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} > /dev/null 2>&1; then
-            echo "repo-found=true" >> $GITHUB_OUTPUT
+          if aws ecr describe-repositories \
+            --repository-names "${{ env.ECR_REPOSITORY }}" \
+            --region "${{ env.AWS_DEFAULT_REGION }}" \
+            > /dev/null 2>&1; then
+            echo "repo-found=true" >> "$GITHUB_OUTPUT"
           else
-            echo "repo-found=false" >> $GITHUB_OUTPUT
+            echo "repo-found=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Abort if ECR repository not found
-        if: steps.check-ecr.outputs.exists != 'true'
+        if: steps.check-ecr.outputs.repo-found != 'true'
         run: |
           echo "::error:: PIPELINE ABORTADA: Repositório ECR '${{ env.ECR_REPOSITORY }}' não existe"
           echo ""
