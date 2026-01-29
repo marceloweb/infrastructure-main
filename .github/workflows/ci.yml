@@ -140,13 +140,13 @@ jobs:
         run: |
           echo "Aplicando manifestos no cluster..."
           
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/configmap.yaml
-          kubectl apply -f k8s/secret.yaml
-          kubectl apply -f k8s/deployment.yaml
-          kubectl apply -f k8s/service.yaml
-          kubectl apply -f k8s/ingress.yaml
-          kubectl apply -f k8s/hpa.yaml
+          kubectl apply -f k8s/namespace.yml
+          kubectl apply -f k8s/configmap.yml
+          kubectl apply -f k8s/secret.yml
+          kubectl apply -f k8s/deployment.yml
+          kubectl apply -f k8s/service.yml
+          kubectl apply -f k8s/ingress.yml
+          kubectl apply -f k8s/hpa.yml
           
           echo "✅ Manifestos aplicados com sucesso!"
 
