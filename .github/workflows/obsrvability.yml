@@ -37,7 +37,7 @@ jobs:
           aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name comments-api-${{ github.event.inputs.environment }} --region ${{ env.AWS_DEFAULT_REGION }}
+        run: aws eks update-kubeconfig --name example-app-${{ github.event.inputs.environment }} --region ${{ env.AWS_DEFAULT_REGION }}
 
       - name: Install Helm
         uses: azure/setup-helm@v4
