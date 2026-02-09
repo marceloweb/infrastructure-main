@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: app
-        image: 890675146779.dkr.ecr.us-east-1.amazonaws.com/example-app-dev:latest
+        image: <URL_ECR_REGISTRY>/<ECR_REGISTRY>:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000

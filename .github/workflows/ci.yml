@@ -124,6 +124,7 @@ jobs:
           DB_HOST: ${{ vars.DB_HOST }}
           DB_PORT: ${{ vars.DB_PORT }}
           DB_NAME: ${{ vars.DB_NAME }}
+          URL_ECR_REGISTRY: ${{ vars.URL_ECR_REGISTRY }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           ECR_REGISTRY: ${{ steps.get-registry.outputs.registry }}
@@ -135,6 +136,8 @@ jobs:
           sed -i "s|<DB_NAME>|${DB_NAME}|g" k8s/configmap.yml
           sed -i "s|<DB_USERNAME>|${DB_USERNAME}|g" k8s/secret.yml
           sed -i "s|<DB_PASSWORD>|${DB_PASSWORD}|g" k8s/secret.yml
+          sed -i "s|<URL_ECR_REGISTRY>|${URL_ECR_REGISTRY}|g" k8s/deployment.yml
+          sed -i "s|<ECR_REGISTRY>|${ECR_REGISTRY}|g" k8s/deployment.yml
 
       - name: Apply Kubernetes manifests
         run: |
@@ -148,17 +151,17 @@ jobs:
           kubectl apply -f k8s/ingress.yml
           kubectl apply -f k8s/hpa.yml
           
-          echo "✅ Manifestos aplicados com sucesso!"
+          echo "Manifestos aplicados com sucesso!"
 
       - name: Wait for deployment rollout
         run: |
-          echo "⏳ Aguardando rollout do deployment..."
+          echo "Aguardando rollout do deployment..."
           kubectl rollout status deployment/app -n example-app --timeout=5m
-          echo "✅ Deployment finalizado!"
+          echo "Deployment finalizado!"
 
       - name: Verify deployment
         run: |
-          echo "🔍 Verificando deployment..."
+          echo "Verificando deployment..."
           echo ""
           echo "Pods:"
           kubectl get pods -n example-app

@@ -1,39 +1,39 @@
 version: '3.8'
 
 services:
-  # app:
-  #   build:
-  #     context: ./app
-  #     dockerfile: Dockerfile
-  #   restart: always
-  #   environment:
-  #     NODE_ENV: development      
-  #     PORT: 3000     
-  #     DB_HOST: db
-  #     DB_PORT: 3306
-  #     DB_USER: test
-  #     DB_PASSWORD: test
-  #     DB_NAME: test
-  #     TYPEORM_CONNECTION: mysql
-  #     TYPEORM_HOST: db
-  #     TYPEORM_PORT: 3306
-  #     TYPEORM_USERNAME: test
-  #     TYPEORM_PASSWORD: test
-  #     TYPEORM_DATABASE: test
-  #     TYPEORM_SYNCHRONIZE: "false"
-  #     TYPEORM_LOGGING: "true"
-  #     TYPEORM_ENTITIES: "dist/entity/**/*.js"
-  #     TYPEORM_MIGRATIONS: "dist/migration/**/*.js"
-  #     TYPEORM_SUBSCRIBERS: "dist/subscriber/**/*.js"
-  #     TYPEORM_MIGRATIONS_RUN: "true"
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./logs:/app/logs
-  #   networks:
-  #     - example-network
-  #   depends_on:
-  #     - db
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: development      
+      PORT: 3000     
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: test
+      TYPEORM_CONNECTION: mysql
+      TYPEORM_HOST: db
+      TYPEORM_PORT: 3306
+      TYPEORM_USERNAME: test
+      TYPEORM_PASSWORD: test
+      TYPEORM_DATABASE: test
+      TYPEORM_SYNCHRONIZE: "false"
+      TYPEORM_LOGGING: "true"
+      TYPEORM_ENTITIES: "dist/entity/**/*.js"
+      TYPEORM_MIGRATIONS: "dist/migration/**/*.js"
+      TYPEORM_SUBSCRIBERS: "dist/subscriber/**/*.js"
+      TYPEORM_MIGRATIONS_RUN: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - example-network
+    depends_on:
+      - db
 
   db:
     image: mariadb:11.2
